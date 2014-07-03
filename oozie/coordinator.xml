@@ -1,0 +1,7 @@
+<coordinator-app name="my_coord_app" frequency="60" start="2014-06-30T13:33Z" end="2014-06-30T14:45Z" timezone="UTC" xmlns="uri:oozie:coordinator:0.4">
+   <action>
+      <workflow>
+         <app-path>wasb://crmrcluster@crmrstorage.blob.core.windows.net/oozie</app-path>
+      </workflow>
+   </action>
+</coordinator-app>

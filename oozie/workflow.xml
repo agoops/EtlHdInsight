@@ -1,0 +1,207 @@
+
+<workflow-app name="ooziewf" xmlns="uri:oozie:workflow:0.2">
+
+    <start to = "cleanup-node"/> 
+
+    <action name="cleanup-node">
+        <fs>
+            <delete path="wasb://crmrcluster@crmrstorage.blob.core.windows.net/OpportunityData"/>
+            <delete path="wasb://crmrcluster@crmrstorage.blob.core.windows.net/ContactData"/>
+            <delete path="wasb://crmrcluster@crmrstorage.blob.core.windows.net/LeadData"/>
+            <delete path="wasb://crmrcluster@crmrstorage.blob.core.windows.net/AccountData"/>
+        </fs>
+        <ok to="RunSqoopAccountImport"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="RunSqoopAccountImport">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+        <arg>import</arg>
+        <arg>--connect</arg> 
+        <arg>jdbc:sqlserver://q1uhkcvnbb.database.windows.net;user=t-ankigu@q1uhkcvnbb;password=turtledive11);database=NGTReportingStage</arg> 
+        <arg>--table</arg>
+        <arg>Account</arg> 
+        <arg>--hive-delims-replacement</arg> 
+        <arg>\t</arg> 
+        <arg>--fields-terminated-by</arg> 
+        <arg>\001</arg> 
+        <arg>--target-dir</arg> 
+        <arg>/AccountData</arg> 
+        <arg>-m</arg> 
+        <arg>1</arg>
+        </sqoop>
+        <ok to="RunSqoopLeadImport"/>
+        <error to="fail"/>
+    </action>
+
+     <action name="RunSqoopLeadImport">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+        <arg>import</arg>
+        <arg>--connect</arg> 
+        <arg>jdbc:sqlserver://q1uhkcvnbb.database.windows.net;user=t-ankigu@q1uhkcvnbb;password=turtledive11);database=NGTReportingStage</arg> 
+        <arg>--table</arg>
+        <arg>Lead</arg> 
+        <arg>--hive-delims-replacement</arg> 
+        <arg>\t</arg> 
+        <arg>--fields-terminated-by</arg> 
+        <arg>\001</arg> 
+        <arg>--target-dir</arg> 
+        <arg>/LeadData</arg> 
+        <arg>-m</arg> 
+        <arg>1</arg>
+        </sqoop>
+        <ok to="RunSqoopContactImport"/>
+        <error to="fail"/>
+    </action>
+
+     <action name="RunSqoopContactImport">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+        <arg>import</arg>
+        <arg>--connect</arg> 
+        <arg>jdbc:sqlserver://q1uhkcvnbb.database.windows.net;user=t-ankigu@q1uhkcvnbb;password=turtledive11);database=NGTReportingStage</arg> 
+        <arg>--table</arg>
+        <arg>Contact</arg> 
+        <arg>--hive-delims-replacement</arg> 
+        <arg>\t</arg> 
+        <arg>--fields-terminated-by</arg> 
+        <arg>\001</arg> 
+        <arg>--target-dir</arg> 
+        <arg>/ContactData</arg> 
+        <arg>-m</arg> 
+        <arg>1</arg>
+        </sqoop>
+        <ok to="RunSqoopOpportunityImport"/>
+        <error to="fail"/>
+    </action>
+
+     <action name="RunSqoopOpportunityImport">
+        <sqoop xmlns="uri:oozie:sqoop-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.compress.map.output</name>
+                    <value>true</value>
+                </property>
+            </configuration>
+        <arg>import</arg>
+        <arg>--connect</arg> 
+        <arg>jdbc:sqlserver://q1uhkcvnbb.database.windows.net;user=t-ankigu@q1uhkcvnbb;password=turtledive11);database=NGTReportingStage</arg> 
+        <arg>--table</arg>
+        <arg>Opportunity</arg> 
+        <arg>--hive-delims-replacement</arg> 
+        <arg>\t</arg> 
+        <arg>--fields-terminated-by</arg> 
+        <arg>\001</arg> 
+        <arg>--target-dir</arg> 
+        <arg>/OpportunityData</arg> 
+        <arg>-m</arg> 
+        <arg>1</arg>
+        </sqoop>
+        <ok to="RunOpportunityQuery"/>
+        <error to="fail"/>
+    </action>
+
+
+
+
+
+
+
+
+    <action name="RunOpportunityQuery">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>default</value>
+                </property>
+            </configuration>
+            <script>wasb://crmrcluster@crmrstorage.blob.core.windows.net/oozie/opportunityquery.hql</script>
+        </hive>
+        <ok to="RunAccountQuery"/>
+        <error to="fail"/>
+    </action>
+
+
+    <action name="RunAccountQuery">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>default</value>
+                </property>
+            </configuration>
+            <script>wasb://crmrcluster@crmrstorage.blob.core.windows.net/oozie/accountquery.hql</script>
+        </hive>
+        <ok to="RunLeadQuery"/>
+        <error to="fail"/>
+    </action>
+
+     <action name="RunLeadQuery">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>default</value>
+                </property>
+            </configuration>
+            <script>wasb://crmrcluster@crmrstorage.blob.core.windows.net/oozie/leadquery.hql</script>
+        </hive>
+        <ok to="RunContactQuery"/>
+        <error to="fail"/>
+    </action>
+
+     <action name="RunContactQuery">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmrcluster@crmrstorage.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>default</value>
+                </property>
+            </configuration>
+            <script>wasb://crmrcluster@crmrstorage.blob.core.windows.net/oozie/contactquery.hql</script>
+        </hive>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+    <kill name="fail">
+        <message>Job failed, error message[${wf:errorMessage(wf:lastErrorNode())}] </message>
+    </kill>
+
+
+   <end name="end"/>
+</workflow-app>

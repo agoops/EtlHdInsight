@@ -1,0 +1,72 @@
+
+<action name="RunAccountQuery">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmreportingclustertemp@crmreportingstoragetemp.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>default</value>
+                </property>
+            </configuration>
+            <script>wasb://crmreportingclustertemp@crmreportingstoragetemp.blob.core.windows.net/oozie/accountquery.hql</script>
+        </hive>
+        <ok to="RunLeadQuery"/>
+        <error to="fail"/>
+    </action>
+
+     <action name="RunLeadQuery">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmreportingclustertemp@crmreportingstoragetemp.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>default</value>
+                </property>
+            </configuration>
+            <script>wasb://crmreportingclustertemp@crmreportingstoragetemp.blob.core.windows.net/oozie/leadquery.hql</script>
+        </hive>
+        <ok to="RunContactQuery"/>
+        <error to="fail"/>
+    </action>
+
+     <action name="RunContactQuery">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>jobtrackerhost:9010</job-tracker>
+            <name-node>wasb://crmreportingclustertemp@crmreportingstoragetemp.blob.core.windows.net</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>default</value>
+                </property>
+            </configuration>
+            <script>wasb://crmreportingclustertemp@crmreportingstoragetemp.blob.core.windows.net/oozie/contactquery.hql</script>
+        </hive>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+
+
+<fork name="fork-import">
+        <path start="RunSqoopOpportunityImport"/>
+        <path start="RunSqoopAccountImport"/>
+        <path start="RunSqoopLeadImport"/>
+        <path start="RunSqoopContactImport"/>
+    </fork>
+
+
+
+
+    <join name="join-import" to="fork-query"/>
+
+    <fork name="fork-query">
+        <path start="RunOpportunityQuery"/>
+        <path start="RunAccountQuery"/>
+        <path start="RunLeadQuery"/>
+        <path start="RunContactQuery"/>
+    </fork>
+
+
+        <join name="join-query" to="end"/>

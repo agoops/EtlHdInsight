@@ -1,0 +1,2 @@
+INSERT OVERWRITE DIRECTORY '/ContactQuery' 
+SELECT	* FROM contacttable
